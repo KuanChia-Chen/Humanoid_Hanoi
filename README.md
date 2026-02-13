@@ -36,7 +36,6 @@ After training a policy (or you can test with the provided policies in `./pretra
 ```
 python eval.py interactive --path ./pretrained_models/CassieEnvClock/spring_3_new/07-12-14-27/
 ```
-to visualize and run a Cassie walking policy. Terminal printout will show a legend of keyboard commands along with what the current commands are. See `evaluation_factory` [documentation](util/readme.md#L15) for more details.
 
 ## Structure Overview
 
