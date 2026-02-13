@@ -34,7 +34,7 @@ Note that for the sim test there is an intermittent seg fault issue with the lib
 ## Evaluation Instructions
 After training a policy (or you can test with the provided policies in `./pretrained_models`) you can evaluate with the `eval.py` script. For example, run
 ```
-python eval.py interactive --path ./pretrained_models/CassieEnvClock/spring_3_new/07-12-14-27/
+python eval.py --path ./pretrained_models/CassieEnvClock/spring_3_new/07-12-14-27/
 ```
 
 ## Structure Overview
