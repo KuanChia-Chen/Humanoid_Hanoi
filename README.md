@@ -1,5 +1,3 @@
-# Roadrunner Refactor
-
 ## Setup Instructions
 Conda is required to run the setup script included with this repository.
 To avoid licensing issues with Anaconda, it is recommended you install conda on your machine via
@@ -11,8 +9,6 @@ chmod +x setup.sh
 bash setup.sh
 ```
 at the root directory of this repository. This script will setup a new conda env, install some additional pip packages, and install mujoco210.
-
-You also need to have ar-software installed in order to run the Digit async simulation. Download it from the Google Drive [here](https://drive.google.com/file/d/1CbesyvdkN1s_V36csKk-cA5IdmaPGGlu/view?usp=sharing), unzip it and move it to your home directory.
 
 You might need to install ffmpeg, with
 ```
