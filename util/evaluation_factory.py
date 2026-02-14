@@ -7,13 +7,11 @@ import torch
 from util.keyboard import Keyboard
 from util.colors import OKGREEN, FAIL, ENDC
 
-def interactive_eval(env, offscreen=False, plot_rewards=False):
+def interactive_eval(env, offscreen=False):
     """Simply evaluating policy in visualization window with user input
 
     Args:
-        actor: Actor loaded outside this function. If Actor is None, this function will evaluate
-            noisy actions without any policy.
-        env: Environment instance for actor
+        env: Environment instance
     """
 
     print(f"{OKGREEN}Feeding keyboard inputs to policy for interactive eval mode.")

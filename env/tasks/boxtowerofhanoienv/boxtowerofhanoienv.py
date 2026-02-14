@@ -17,7 +17,7 @@ class BoxTowerOfHanoiEnv(GenericEnv, BoxManipulationCmd):
 
     def __init__(
         self,
-        # reward_name: str,
+        reward_name: str,
         policy_rate: int,
         simulator_type: str,
         dynamics_randomization: bool,
@@ -27,7 +27,7 @@ class BoxTowerOfHanoiEnv(GenericEnv, BoxManipulationCmd):
     ):
     
         super().__init__(
-            # reward_name=reward_name,
+            reward_name=reward_name,
             simulator_type=simulator_type,
             policy_rate=policy_rate,
             dynamics_randomization=dynamics_randomization,
@@ -112,7 +112,7 @@ class BoxTowerOfHanoiEnv(GenericEnv, BoxManipulationCmd):
             "policy-rate"        : (50, "Rate at which policy runs in Hz"),
             "dynamics-randomization" : (True, "Whether to use dynamics randomization or not (default is True)"),
             "state-noise"        : ([0,0,0,0,0,0], "Amount of noise to add to proprioceptive state."),
-            # "reward-name"        : ("pos_delta", "Which reward to use"),
+            "reward-name"        : ("pos_delta", "Which reward to use"),
         }
 
     def get_box_world_pose(self, box_finish_count = None):
@@ -284,12 +284,12 @@ class BoxTowerOfHanoiEnv(GenericEnv, BoxManipulationCmd):
         self.label_0_marker = None
         self.label_1_marker = None
         self.label_2_marker = None
-        self.arraw_0_height = 1.75
-        self.arraw_1_height = 1.8
-        self.arraw_2_height = 1.85
-        self.arraw_0_change = 0.002
-        self.arraw_1_change = 0.002
-        self.arraw_2_change = -0.002
+        self.arrow_0_height = 1.75
+        self.arrow_1_height = 1.8
+        self.arrow_2_height = 1.85
+        self.arrow_0_change = 0.002
+        self.arrow_1_change = 0.002
+        self.arrow_2_change = -0.002
         self.target_marker_0 = None
         self.target_marker_1 = None
         self.target_marker_2 = None
@@ -467,7 +467,7 @@ class BoxTowerOfHanoiEnv(GenericEnv, BoxManipulationCmd):
 
     def save_log_benchmark_data(self):
         #save as npz file
-        filename = f"Tower_of_hanoi_benchmark/TOH_base_0.3_weight_dr_benchmark.npz"
+        filename = f"Tower_of_hanoi_benchmark/TOH_base_benchmark.npz"
         np.savez(filename, benchmark_data=self.benchmark_data)
 
         print()
@@ -536,11 +536,11 @@ class BoxTowerOfHanoiEnv(GenericEnv, BoxManipulationCmd):
         if self.desk_0_marker is None:
             self.desk_0_marker = self.sim.viewer.add_marker(*marker_params)
 
-        self.arraw_0_height += self.arraw_0_change
-        if self.arraw_0_height >= 1.85 or self.arraw_0_height <= 1.75:
-            self.arraw_0_change = -self.arraw_0_change
+        self.arrow_0_height += self.arrow_0_change
+        if self.arrow_0_height >= 1.85 or self.arrow_0_height <= 1.75:
+            self.arrow_0_change = -self.arrow_0_change
                 
-        self.sim.viewer.update_marker_position(self.desk_0_marker, [self.desk_position[0][0], self.desk_position[0][1], self.arraw_0_height])
+        self.sim.viewer.update_marker_position(self.desk_0_marker, [self.desk_position[0][0], self.desk_position[0][1], self.arrow_0_height])
 
         so3 = euler2so3(z=0, x=np.pi, y=0)
         size = [0.03, 0.03, 0.5]
@@ -549,11 +549,11 @@ class BoxTowerOfHanoiEnv(GenericEnv, BoxManipulationCmd):
         if self.desk_1_marker is None:
             self.desk_1_marker = self.sim.viewer.add_marker(*marker_params)    
   
-        self.arraw_1_height += self.arraw_1_change
-        if self.arraw_1_height >= 1.85 or self.arraw_1_height <= 1.75:
-            self.arraw_1_change = -self.arraw_1_change
+        self.arrow_1_height += self.arrow_1_change
+        if self.arrow_1_height >= 1.85 or self.arrow_1_height <= 1.75:
+            self.arrow_1_change = -self.arrow_1_change
                 
-        self.sim.viewer.update_marker_position(self.desk_1_marker, [self.desk_position[1][0], self.desk_position[1][1], self.arraw_1_height])
+        self.sim.viewer.update_marker_position(self.desk_1_marker, [self.desk_position[1][0], self.desk_position[1][1], self.arrow_1_height])
 
         so3 = euler2so3(z=0, x=np.pi, y=0)
         size = [0.03, 0.03, 0.5]
@@ -562,11 +562,11 @@ class BoxTowerOfHanoiEnv(GenericEnv, BoxManipulationCmd):
         if self.desk_2_marker is None:
             self.desk_2_marker = self.sim.viewer.add_marker(*marker_params)    
 
-        self.arraw_2_height += self.arraw_2_change
-        if self.arraw_2_height >= 1.85 or self.arraw_2_height <= 1.75:
-            self.arraw_2_change = -self.arraw_2_change
+        self.arrow_2_height += self.arrow_2_change
+        if self.arrow_2_height >= 1.85 or self.arrow_2_height <= 1.75:
+            self.arrow_2_change = -self.arrow_2_change
                 
-        self.sim.viewer.update_marker_position(self.desk_2_marker, [self.desk_position[2][0], self.desk_position[2][1], self.arraw_2_height])
+        self.sim.viewer.update_marker_position(self.desk_2_marker, [self.desk_position[2][0], self.desk_position[2][1], self.arrow_2_height])
 
         so3 = euler2so3(z=0, x=0, y=0)
         size = [0.015, 0.015, 0.4]
@@ -575,7 +575,7 @@ class BoxTowerOfHanoiEnv(GenericEnv, BoxManipulationCmd):
         if self.label_0_marker is None:
             self.label_0_marker = self.sim.viewer.add_marker(*marker_params)
             self.sim.viewer.update_marker_name(self.label_0_marker, "Tower 0")
-        self.sim.viewer.update_marker_position(self.label_0_marker, [self.desk_position[0][0], self.desk_position[0][1], self.arraw_0_height])
+        self.sim.viewer.update_marker_position(self.label_0_marker, [self.desk_position[0][0], self.desk_position[0][1], self.arrow_0_height])
 
         so3 = euler2so3(z=0, x=0, y=0)
         size = [0.015, 0.015, 0.4]
@@ -584,7 +584,7 @@ class BoxTowerOfHanoiEnv(GenericEnv, BoxManipulationCmd):
         if self.label_1_marker is None:
             self.label_1_marker = self.sim.viewer.add_marker(*marker_params)
             self.sim.viewer.update_marker_name(self.label_1_marker, "Tower 1")
-        self.sim.viewer.update_marker_position(self.label_1_marker, [self.desk_position[1][0], self.desk_position[1][1], self.arraw_1_height])
+        self.sim.viewer.update_marker_position(self.label_1_marker, [self.desk_position[1][0], self.desk_position[1][1], self.arrow_1_height])
 
         so3 = euler2so3(z=0, x=0, y=0)
         size = [0.015, 0.015, 0.4]
@@ -593,7 +593,7 @@ class BoxTowerOfHanoiEnv(GenericEnv, BoxManipulationCmd):
         if self.label_2_marker is None:
             self.label_2_marker = self.sim.viewer.add_marker(*marker_params)
             self.sim.viewer.update_marker_name(self.label_2_marker, "Tower 2")
-        self.sim.viewer.update_marker_position(self.label_2_marker, [self.desk_position[2][0], self.desk_position[2][1], self.arraw_2_height])
+        self.sim.viewer.update_marker_position(self.label_2_marker, [self.desk_position[2][0], self.desk_position[2][1], self.arrow_2_height])
 
 
         target_position_0 = [self.desk_position[0][0], self.desk_position[0][1]]
