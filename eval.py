@@ -29,7 +29,7 @@ if __name__ == "__main__":
     # Override with specific defaults for this use case
     env_args.simulator_type = "box_tower_of_hanoi_mesh"  # Use mesh model
     env_args.reward_name = "humanoidhanoi"
-    env_args.dynamics_randomization = False  # Disable DR for evaluation
+    env_args.dynamics_randomization = False
     
     # Overwrite env args with any provided command line arguments
     for arg, val in vars(args).items():

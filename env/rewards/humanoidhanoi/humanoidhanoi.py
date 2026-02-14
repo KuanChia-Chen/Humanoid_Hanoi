@@ -55,13 +55,6 @@ def compute_done(self):
             return True
 
     time_difference = self.time_step - self.pre_change_time
-    if time_difference > 1000 and time_difference < 1006 and (self.current_skill == "walk_with_box" or self.current_skill == "walk_without_box"):
-        #push robot
-        self.base_adr = self.sim.get_body_adr(self.sim.base_body_name)
-        self.sim.data.xfrc_applied[self.base_adr, 0:2] = np.array([150, 0.0])
-    else:
-        self.base_adr = self.sim.get_body_adr(self.sim.base_body_name)
-        self.sim.data.xfrc_applied[self.base_adr, 0:2] = np.array([0.0, 0.0])
 
     if time_difference > 1500:
         return True

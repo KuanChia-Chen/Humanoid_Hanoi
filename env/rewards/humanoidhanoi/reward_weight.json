@@ -1,62 +1,6 @@
 {
     "normalize": false,
     "weights": {
-        "constellation_exp": {
-            "weighting": 1.0,
-            "scaling": 0.5
-        },
-        "pos_err": {
-            "weighting": 0.2,
-            "scaling": 1.0
-        },
-        "yaw_error": {
-            "weighting": 0.2,
-            "scaling": 2.0
-        },
-        "stance_feet_pos": {
-            "weighting": 0.05,
-            "scaling": 2.0
-        },
-        "stable_base": {
-            "weighting": 0.1,
-            "scaling": 0.01
-        },
-        "ctrl_penalty": {
-            "weighting": 0.1,
-            "scaling": 8.0
-        },
-        "trq_penalty": {
-            "weighting": 0.02,
-            "scaling": 5.0
-        },
-        "energy_penalty": {
-            "weighting": 0.1,
-            "scaling": 0.1
-        },
-        "cmd_mag_penalty": {
-            "weighting": 0.06,
-            "kernel": false
-        },
-        "hand_roll_penalty": {
-            "weighting": 0.05,
-            "scaling": 10.0
-        },
-        "box_contact_reward": {
-            "weighting": 0.02,
-            "kernel": false
-        },
-        "box_orientation_reward": {
-            "weighting": 0.1,
-            "scaling": 5.0
-        },
-        "box_center_reward": {
-            "weighting": 0.05,
-            "scaling": 5.0
-        },
-        "box_position_reward": {
-            "weighting": 0.05,
-            "scaling": 5.0
-        }
     },
     "terminations": [
         "base_height",

@@ -53,14 +53,11 @@ class MjG1SimBoxTowerOfHanoi(MjG1Sim):
                                   mj.mj_name2id(self.model, mj.mjtObj.mjOBJ_BODY, "box")]
         self.floor_geom_id = mj.mj_name2id(self.model, mj.mjtObj.mjOBJ_GEOM, "floor")
 
-        # G1 reset_qpos with boxes: robot (36 DOF) + 3 boxes (7 DOF each) = 57 total
-        # Box order in qpos (matches XML order): box (indices 36-42), box1 (indices 43-49), box2 (indices 50-56)
-        # Code uses: box -> qpos[-21:-14], box1 -> qpos[-14:-7], box2 -> qpos[-7:]
-        self.reset_qpos = np.array([0.0, 0.00, 0.793, 1, 0, 0, 0,  # Base
-                                    # Left leg (6)
-                                    0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+        self.reset_qpos = np.array([0.0, 0.00, 0.8, 1, 0, 0, 0,  # Base
+                                    # Left leg (6) - Unitree default_joint_angles
+                                    -0.1, 0.0, 0.0, 0.3, -0.2, 0.0,
                                     # Right leg (6)
-                                    0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                                    -0.1, 0.0, 0.0, 0.3, -0.2, 0.0,
                                     # Waist (3)
                                     0.0, 0.0, 0.0,
                                     # Left arm (7)

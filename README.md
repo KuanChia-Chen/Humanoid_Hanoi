@@ -5,43 +5,27 @@ To avoid licensing issues with Anaconda, it is recommended you install conda on 
 
 To create a fresh conda env with all the necessary dependencies, simply run
 ```
-chmod +x setup.sh
-bash setup.sh
+chmod +x setup.bash
+bash setup.bash
 ```
 at the root directory of this repository. This script will setup a new conda env, install some additional pip packages, and install mujoco210.
 
-You might need to install ffmpeg, with
+## Usage
+
+To evaluate the environment, run `eval.py` with the `--robot` flag to specify which robot to use:
 ```
-sudo apt install ffmpeg
+python eval.py --robot <robot_name>
 ```
 
-You should then be able to run the tests. Start with sim tests first, then env tests, then finally algo test. Run:
-```
-python test.py --all
-```
-Alternatively, you can run each test individually with the following commands:
-```
-python test.py --sim
-python test.py --env
-python test.py --algo
-python test.py --nn
-python test.py --render
-python test.py --mirror
-python test.py --timing
-```
-Note that for the sim test there is an intermittent seg fault issue with the libcassie viewer. If you get a segfault during libcassiesim test, you might have to try running it again a few times. We've found that it can sometimes happen if you close the viewer window too early.
+The `--robot` flag accepts one of the following options:
+- `"h1"` - H1 humanoid robot
+- `"g1"` - G1 humanoid robot  
+- `"digit"` - Digit humanoid robot (default)
 
-## Evaluation Instructions
-After training a policy (or you can test with the provided policies in `./pretrained_models`) you can evaluate with the `eval.py` script. For example, run
-```
-python eval.py --path ./pretrained_models/CassieEnvClock/spring_3_new/07-12-14-27/
-```
+You can also use the `--offscreen` flag to run the evaluation without a display window.
 
-## Structure Overview
+During interactive evaluation, press the `'r'` key to reset the environment.
 
-The repo is split into 6 main folders. Each contains it's own readme with further documentation.
-- [`nn`](nn): Contains all of the neural network definitions used for both actors and critics. Implements things like FF networks, LSTM networks, etc.
-- [`env`](env): Contains all of the environment definitions. Split into Cassie and Digit envs. Also contains all of the reward functions.
-- [`sim`](sim): Contains all of the simulation classes that the environment use and interact with.
-- [`testing`](testing): Contains all of the testing functions used for CI and debugging. Performance testing for policies will go here as well.
-- [`util`](util): Contains repo wide utility functions. Only utilities that are used across multiple of the above folders, or in scripts at the top level should be here. Otherwise they should go into the corresponding folder's util folder.
+## Note
+
+**This repository contains only the environment implementation. Training code is NOT included.**
