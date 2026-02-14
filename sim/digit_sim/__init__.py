@@ -1,2 +1,2 @@
 from .mj_digitsim import MjDigitSim
-from .mj_digitsimboxtowerofhonai import MjDigitSimBoxTowerOfHonai
+from .mj_digitsimboxtowerofhanoi import MjDigitSimBoxTowerOfHanoi

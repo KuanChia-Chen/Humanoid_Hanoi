@@ -25,16 +25,20 @@ class BoxTowerOfHanoiEnv(GenericEnv, BoxManipulationCmd):
         integral_action: bool = False,
         **kwargs,
     ):
+        # Extract arguments from kwargs to avoid duplicates
+        robot_name = kwargs.pop('robot_name', 'digit')
+        terrain = kwargs.pop('terrain', '')
+        state_est = kwargs.pop('state_est', False)
     
         super().__init__(
-            robot_name="digit",
+            robot_name=robot_name,
             reward_name=reward_name,
             simulator_type=simulator_type,
-            terrain="",
+            terrain=terrain,
             policy_rate=policy_rate,
             dynamics_randomization=dynamics_randomization,
             state_noise=state_noise,
-            state_est=False,
+            state_est=state_est,
             integral_action=integral_action,
             **kwargs,
         )

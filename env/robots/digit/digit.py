@@ -2,7 +2,7 @@ import numpy as np
 
 from env.robots.base_robot import BaseRobot
 from util.colors import FAIL, WARNING, ENDC
-from sim import MjDigitSim, MjDigitSimBoxTowerOfHonai
+from sim import MjDigitSim, MjDigitSimBoxTowerOfHanoi
 from testing.common import DIGIT_JOINT_LLAPI2MJ_INDEX, DIGIT_MOTOR_LLAPI2MJ_INDEX
 
 
@@ -94,8 +94,8 @@ class Digit(BaseRobot):
             fast = True
         if simulator_type == "mujoco":
             self._sim = MjDigitSim(terrain=terrain, fast=fast)
-        elif simulator_type == "box_tower_of_honai":
-            self._sim = MjDigitSimBoxTowerOfHonai(fast=fast)
+        elif simulator_type == "box_tower_of_hanoi":
+            self._sim = MjDigitSimBoxTowerOfHanoi(fast=fast)
         elif simulator_type == 'ar_async':
             self.llapi_obs = None
             self._sim = MjDigitSim(terrain=terrain)

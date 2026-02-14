@@ -28,7 +28,7 @@ if __name__ == "__main__":
     actor_checkpoint = torch.load(os.path.join(model_path, 'actor.pt'), map_location='cpu')
 
     # Load environment
-    previous_args_dict['env_args'].simulator_type = "box_tower_of_honai"
+    previous_args_dict['env_args'].simulator_type = "box_tower_of_hanoi"
     previous_args_dict['algo_args'].env_name = "BoxTowerOfHanoiEnv"
 
     add_env_parser(previous_args_dict['all_args'].env_name, parser, is_eval=True)
@@ -40,6 +40,8 @@ if __name__ == "__main__":
             setattr(previous_args_dict['env_args'], arg, val)
 
     previous_args_dict['env_args'].simulator_type += "_mesh"      # Use mesh model
+    print(previous_args_dict['env_args'])
+    previous_args_dict['env_args'].reward_name = "pos_delta_target"
     env = env_factory(previous_args_dict['all_args'].env_name, previous_args_dict['env_args'])()
 
     interactive_eval(env=env, offscreen=args.offscreen)

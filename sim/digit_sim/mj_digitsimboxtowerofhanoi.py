@@ -5,12 +5,12 @@ from util.colors import FAIL, WARNING, ENDC
 from sim.digit_sim.mj_digitsim import MjDigitSim
 
 
-class MjDigitSimBoxTowerOfHonai(MjDigitSim):
+class MjDigitSimBoxTowerOfHanoi(MjDigitSim):
 
     """
     Wrapper for Digit Mujoco. This class only defines several specifics for Digit.
     """
-    def __init__(self, model_name: str = "digit-v3-box-tower-of-honai.xml", fast=True):
+    def __init__(self, model_name: str = "digit-v3-box-tower-of-hanoi.xml", fast=True):
 
         # NOTE: Have to call super init AFTER index arrays are defined
         super().__init__(model_name=model_name, fast=fast)
