@@ -16,7 +16,6 @@ Class to handle visualization of generic Mujoco models. Adapted from cassie-mujo
 """
 
 # help strings
-# TODO: Fill out rest of help strings for key functionality
 HELP_CONTENT = ("Alt mouse button\n"
         "UI right hold\n"
         "UI title double-click\n"

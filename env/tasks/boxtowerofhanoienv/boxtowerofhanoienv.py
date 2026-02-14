@@ -17,7 +17,7 @@ class BoxTowerOfHanoiEnv(GenericEnv, BoxManipulationCmd):
 
     def __init__(
         self,
-        reward_name: str,
+        # reward_name: str,
         policy_rate: int,
         simulator_type: str,
         dynamics_randomization: bool,
@@ -25,20 +25,13 @@ class BoxTowerOfHanoiEnv(GenericEnv, BoxManipulationCmd):
         integral_action: bool = False,
         **kwargs,
     ):
-        # Extract arguments from kwargs to avoid duplicates
-        robot_name = kwargs.pop('robot_name', 'digit')
-        terrain = kwargs.pop('terrain', '')
-        state_est = kwargs.pop('state_est', False)
     
         super().__init__(
-            robot_name=robot_name,
-            reward_name=reward_name,
+            # reward_name=reward_name,
             simulator_type=simulator_type,
-            terrain=terrain,
             policy_rate=policy_rate,
             dynamics_randomization=dynamics_randomization,
             state_noise=state_noise,
-            state_est=state_est,
             integral_action=integral_action,
             **kwargs,
         )
@@ -119,7 +112,7 @@ class BoxTowerOfHanoiEnv(GenericEnv, BoxManipulationCmd):
             "policy-rate"        : (50, "Rate at which policy runs in Hz"),
             "dynamics-randomization" : (True, "Whether to use dynamics randomization or not (default is True)"),
             "state-noise"        : ([0,0,0,0,0,0], "Amount of noise to add to proprioceptive state."),
-            "reward-name"        : ("pos_delta", "Which reward to use"),
+            # "reward-name"        : ("pos_delta", "Which reward to use"),
         }
 
     def get_box_world_pose(self, box_finish_count = None):

@@ -8,12 +8,7 @@ from .mujoco_viewer import MujocoViewer
 from .mujoco_render import MujocoRender
 from util.colors import FAIL, WARNING, ENDC
 from sim.util.geom import Geom
-from sim.util.hfield import Hfield
 from util.quaternion import quaternion2euler, euler2quat
-from util.camera_util import (
-    make_pose, pose_inv, transform_from_pixels_to_world,
-    transform_from_pixels_to_camera_frame
-)
 class MujocoSim(GenericSim):
     """
     A base class to define general useful functions that interact with Mujoco simulator.
@@ -62,7 +57,7 @@ class MujocoSim(GenericSim):
                                    "friction": self.get_geom_friction("floor"),
                                    "solref": self.get_geom_solref()}
 
-        # Load geoms/bodies for hfield/box/obstacle/stone/stair
+        # Load geoms/bodies for box/obstacle/stone/stair
         self.load_fixed_object()
         # self.load_movable_object()
 
@@ -91,9 +86,6 @@ class MujocoSim(GenericSim):
             assert len(qvel) == self.model.nv, \
                 f"{FAIL}reset qvel len={len(qvel)}, but should be {self.model.nv}.{ENDC}"
             self.data.qvel = qvel
-        # To avoid mjWarning on arena memory allocation, init hfield before first mj_forward().
-        if self.terrain == 'hfield':
-            self.init_hfield()
         mj.mj_forward(self.model, self.data)
 
     def sim_forward(self, dt: float = None):
@@ -282,118 +274,8 @@ class MujocoSim(GenericSim):
         else:
             raise ValueError("Invalid type specified. Choose 'depth' or 'rgb'.")
 
-    def init_hfield(self):
-        """Initialize hfield relevant params from XML, hfield_data, reset hfield to flat ground.
-        """
-        self.hfield_radius_x, self.hfield_radius_y, \
-            self.hfield_max_z, self.hfield_min_z = self.model.hfield('hfield0').size
-        self.hfield_nrow, self.hfield_ncol = self.model.hfield_nrow[0], self.model.hfield_ncol[0]
-        # Resolution meter/pixel
-        self.hfield_res_x = self.hfield_radius_x * 2 / self.hfield_nrow
-        self.hfield_res_y = self.hfield_radius_y * 2 / self.hfield_ncol
-        self.hfield_data = np.zeros((self.model.hfield_nrow[0], self.model.hfield_ncol[0]))
-        self.model.hfield('hfield0').data[:] = self.hfield_data
-        self.hfield_generator = Hfield(nrow=self.hfield_nrow, ncol=self.hfield_ncol)
-
-    def upload_hfield(self, hfieldid=0):
-        """Sync up MjModel with MjContext, applyting to main viewer or renderers.
-        https://mujoco.readthedocs.io/en/stable/programming/simulation.html?highlight=mjr_uploadHField#model-changes
-        Mujoco seems only allow a single mjrContext when updating mjModel.
-        Thus, only one of the following will actually take an affect.
-        For regular single-window mujoco viewer, the first is active.
-        For single offscreen rendering, the second is active.
-        """
-        if self.renderer is not None: # if renderer exists, use it
-            mj.mjr_uploadHField(self.model, self.renderer._mjr_context, hfieldid)
-        if self.viewer is not None: # the main mujoco_viewer is alive
-            mj.mjr_uploadHField(self.model, self.viewer.ctx, hfieldid)
-
-    def randomize_hfield(self, hfield_type: str=None, data: np.ndarray=None):
-        """Randomize hfield data and reset robot pose. If using viewer to visualize, this function
-        needs to be called after viewer_init() so mjContext is initialized.
-
-        Args:
-            hfield_type (str, optional): Type of hfield ['flat', 'noisy', 'stone', 'bump', 'stair].
-                This is loading precomputed hfield.
-            data (np.ndarray, optional): 2D ndarray. For hfield.data [0, 0] is bottom right.
-                Rows are world-Y axis, and Cols are world-X axis. Data will be normalized to [0, 1].
-        """
-        if hfield_type is not None:
-            if hfield_type in self.hfield_generator.hfield_names:
-                run_func = f"self.hfield_generator.create_{hfield_type}()"
-                data = getattr(self.hfield_generator, f"create_{hfield_type}")()
-        elif data is not None:
-            if data.shape != (self.hfield_nrow, self.hfield_ncol):
-                raise TypeError(f"randomize_hfield got not supported data {data}")
-        else:
-            data = np.zeros((self.hfield_nrow, self.hfield_nrow))
-        # Mujoco takes in normalized data and scale it to max_z
-        assert np.max(data) <= self.hfield_max_z, \
-            f"Max height {np.max(data)} is larger than max_z {self.hfield_max_z}."
-        self.hfield_data = data / self.hfield_max_z
-        self.model.hfield('hfield0').data[:] = self.hfield_data
-        self.upload_hfield()
-        self.adjust_robot_pose(terrain_type='hfield')
-
-    def get_hfield_height(self, x: float, y: float):
-        """Get the height of hfield given world XY location. Returns a single float for height.
-        """
-        if x > self.hfield_radius_x or x < -self.hfield_radius_x or \
-           y > self.hfield_radius_y or y < -self.hfield_radius_y:
-            return -10
-        x_pixel = self.hfield_nrow // 2 + int(x / self.hfield_radius_x * self.hfield_nrow / 2)
-        y_pixel = self.hfield_ncol // 2 + int(y / self.hfield_radius_y * self.hfield_ncol / 2)
-        return self.hfield_max_z * self.hfield_data[y_pixel, x_pixel]
-
-    def get_hfield_map(self, grid_unrotated: np.ndarray):
-        """Get the local height map at the robot base frame.
-
-        Args:
-            grid_unrotated (np.ndarray): 2D float array of shape (heightmap_num_points, 3).
-                This grid represents the local heightmap in the robot base frame.
-                The first two columns are the x, y coordinates of the grid points.
-                The third column is the z coordinate of the grid. This data format only represents
-                where to fetch the heightmap data in 3D space relative to robot, not the actual data.
-
-        Returns:
-            hfield_map (np.ndarray): 1D array of shape (heightmap_num_points,). This is the local
-                heightmap in the robot base frame and heading. The heightmap can be reshaped into
-                a 2D array. And the reshape should follow the same order as the grid_unrotated [x, y].
-            gridxy_rotated (np.ndarray): 2D float array of shape (heightmap_num_points, 3). This grid
-                is rotated to heading but not offset to base position. This is useful for visualization.
-        """
-        heightmap_num_points = grid_unrotated.shape[0]
-        # Rotate the heightmap to base heading, offset to base position, and offset to hfield center
-        gridxy_rotated = np.zeros((heightmap_num_points, 3))
-        # TODO: helei, change this to vectorized version
-        q = euler2quat(z=quaternion2euler(self.get_base_orientation())[2], y=0, x=0)
-        for i in range(heightmap_num_points):
-            mj.mju_rotVecQuat(gridxy_rotated[i], grid_unrotated[i], q)
-        gridxy_rotated += self.get_base_position()
-        gridxy_rotated_global = gridxy_rotated + self.hfield_radius_x
-        # Conver into global pixel space to get the local heightmap
-        pixels = gridxy_rotated_global / self.hfield_res_x
-        px = pixels[:, 0].astype(int)
-        py = pixels[:, 1].astype(int)
-        # Check if the robot is about to run off the hfield
-        # User has to make sure training does not let this happen
-        assert np.all(px >= 0) and np.all(px <= self.hfield_nrow) and \
-               np.all(py >= 0) and np.all(py <= self.hfield_ncol), \
-               f"Pixels are out of bound. Robot is at {self.get_base_position()} m, " \
-               f"hfield radius is {self.hfield_radius_x}x{self.hfield_radius_y}."
-        # Take minimum of surrounding pixels for each point to avoid ambigious height
-        # NOTE: need to swap x and y because raw hfield is stored in [y, x] format
-        average_height = []
-        increment = [[-1, 0], [1, 0], [0, 0], [0, -1], [0, 1]]
-        for i, vec in enumerate(increment):
-            average_height.append(self.hfield_max_z * self.hfield_data[py+vec[0], px+vec[1]])
-        hfield_map = np.min(average_height, axis=0)
-        assert hfield_map.shape == (heightmap_num_points,),\
-               f"Expected hfield_map shape {(heightmap_num_points,)}, got {hfield_map.shape}."
-        return hfield_map, gridxy_rotated
-
     def adjust_robot_pose(self, terrain_type='geom'):
-        """Adjust robot pose to avoid robot bodies stuck inside hfield or geoms.
+        """Adjust robot pose to avoid robot bodies stuck inside geoms.
         Make sure to call if env is updating the model.
         NOTE: Be careful of initializing robot in a bad pose. This function will not fix that mostly.
         """
@@ -413,17 +295,6 @@ class MujocoSim(GenericSim):
                     box_id, heel_hgt = self.geom_generator.check_step(x - 0.09, y, 0)
                     box_id, toe_hgt  = self.geom_generator.check_step(x + 0.09, y, 0)
                     z_hgt = max(heel_hgt, toe_hgt)
-                    z_deltas.append((z_hgt-z))
-                delta = max(z_deltas)
-            elif terrain_type == 'hfield':
-                # Check iteratively if robot is colliding with geom in XY and move robot up in Z
-                z_deltas = []
-                for (x,y,z) in [lfoot_pos, rfoot_pos]:
-                    tl_hgt = self.get_hfield_height(x + 0.09, y + 0.05)
-                    tr_hgt = self.get_hfield_height(x + 0.09, y - 0.05)
-                    bl_hgt = self.get_hfield_height(x - 0.09, y + 0.05)
-                    br_hgt = self.get_hfield_height(x - 0.09, y - 0.05)
-                    z_hgt = max(tl_hgt, tr_hgt, bl_hgt, br_hgt)
                     z_deltas.append((z_hgt-z))
                 delta = max(z_deltas)
             else:
@@ -580,7 +451,6 @@ class MujocoSim(GenericSim):
 
     def get_body_velocity(self, name: str, local_frame=False):
         """Get body velocity by name.
-        # TODO: helei, make this generic to take geom and site
 
         Args:
             name (str): body name
@@ -958,9 +828,9 @@ class MujocoSim(GenericSim):
                 self.model.geom(name).rbound = max(max(size[0], size[1]), size[2])
             case mj.mjtGeom.mjGEOM_BOX:
                 self.model.geom(name).rbound = np.sqrt(np.sum(np.power(size, 2)))
-            case mj.mjtGeom.mjGEOM_HFIELD | mj.mjtGeom.mjGEOM_SDF | mj.mjtGeom.mjGEOM_MESH:
-                warnings.warn(f"{WARNING}Warning: `set_geom_size` not compatible with height field,"
-                    f" sdf, or mesh type geoms. Use the respective geom type functions instead.{ENDC}")
+            case mj.mjtGeom.mjGEOM_SDF | mj.mjtGeom.mjGEOM_MESH:
+                warnings.warn(f"{WARNING}Warning: `set_geom_size` not compatible with "
+                    f"sdf or mesh type geoms. Use the respective geom type functions instead.{ENDC}")
 
         geom_id = mj.mj_name2id(self.model, mj.mjtObj.mjOBJ_GEOM, name)
         # Update aabb parameters just in case midphase pruning is enabled
@@ -973,136 +843,6 @@ class MujocoSim(GenericSim):
     def set_body_pose(self, name: str, pose: np.ndarray):
         self.data.body(name).xpos = pose[0:3]
         self.data.body(name).xquat = pose[3:7]
-
-    def get_camera_intrinsic_matrix(self, camera_name, camera_height, camera_width):
-        """
-        Obtains camera intrinsic matrix.
-
-        Args:
-            camera_name (str): name of camera
-            camera_height (int): height of camera images in pixels
-            camera_width (int): width of camera images in pixels
-        Return:
-            cam_intrinsic_mat (np.array): 3x3 camera matrix
-        """
-        cam_id = mj.mj_name2id(self.model, mj.mjtObj.mjOBJ_CAMERA, camera_name)
-        fovy = self.model.cam_fovy[cam_id]
-        f = 0.5 * camera_height / np.tan(fovy * np.pi / 360)
-        cam_intrinsic_mat = np.array([[f, 0, camera_width / 2], [0, f, camera_height / 2], [0, 0, 1]])
-        return cam_intrinsic_mat
-
-    def get_camera_extrinsic_matrix(self, camera_name):
-        """
-        Returns a 4x4 homogenous matrix corresponding to the camera pose in the
-        world frame. MuJoCo has a weird convention for how it sets up the
-        camera body axis, so we also apply a correction so that the x and y
-        axis are along the camera view and the z axis points along the
-        viewpoint.
-        Normal camera convention: https://docs.opencv.org/2.4/modules/calib3d/doc/camera_calibration_and_3d_reconstruction.html
-
-        Args:
-            camera_name (str): name of camera
-        Return:
-            cam_extrinsic_mat (np.array): 4x4 camera extrinsic matrix (also know as rotation matrix of camera)
-        """
-        cam_id = mj.mj_name2id(self.model, mj.mjtObj.mjOBJ_CAMERA, camera_name)
-        camera_pos = self.data.cam_xpos[cam_id]
-        camera_rot = self.data.cam_xmat[cam_id].reshape(3, 3)
-        cam_extrinsic_mat = make_pose(camera_pos, camera_rot)
-
-        # IMPORTANT! This is a correction so that the camera axis is set up along the viewpoint correctly.
-        camera_axis_correction = np.array(
-            [[1.0, 0.0, 0.0, 0.0], [0.0, -1.0, 0.0, 0.0], [0.0, 0.0, -1.0, 0.0], [0.0, 0.0, 0.0, 1.0]]
-        )
-        cam_extrinsic_mat = cam_extrinsic_mat @ camera_axis_correction
-        return cam_extrinsic_mat
-
-    def get_camera_transform_matrix(self, camera_name, camera_height, camera_width):
-        """
-        Camera transform matrix to project from world coordinates to pixel coordinates.
-
-        Args:
-            camera_name (str): name of camera
-            camera_height (int): height of camera images in pixels
-            camera_width (int): width of camera images in pixels
-        Return:
-            cam_intrinsic_mat (np.array): 4x4 camera matrix to project from world coordinates to pixel coordinates
-        """
-        cam_extrinsic_mat = self.get_camera_extrinsic_matrix(camera_name=camera_name)
-        cam_intrinsic_mat = self.get_camera_intrinsic_matrix(camera_name=camera_name, camera_height=camera_height, camera_width=camera_width)
-        cam_intrinsic_mat_exp = np.eye(4)
-        cam_intrinsic_mat_exp[:3, :3] = cam_intrinsic_mat
-
-        # Takes a point in world, transforms to camera frame, and then projects onto image plane.
-        return cam_intrinsic_mat_exp @ pose_inv(cam_extrinsic_mat)
-
-    def get_camera_segmentation(self, camera_name, camera_height, camera_width):
-        """
-        Obtains camera segmentation matrix.
-
-        Args:
-            camera_name (str): name of camera
-            camera_height (int): height of camera images in pixels
-            camera_width (int): width of camera images in pixels
-        Return:
-            im (np.array): 2-channel segmented image where the first contains the
-                geom types and the second contains the geom IDs
-        """
-        return self.render(camera_name=camera_name, height=camera_height, width=camera_width, segmentation=True)[::-1]
-
-    def get_point_cloud(self, camera_name, depth_image, stride):
-        """
-        Generate a point cloud from a depth image using the specified camera and stride.
-        Always use raw_depth=True when calling get_depth_image.
-        Args:
-            camera_name (str): Name of the camera used to capture the depth image
-            depth_image (np.array): Depth image to be converted into a point cloud.
-            stride (int): Stride for resizing the output point cloud
-
-        Returns:
-            point_cloud (np.array): 3D point cloud generated from the depth image
-        """
-        # Set camera_name and get dimensions of the depth_image
-        camera_height, camera_width = depth_image.shape
-        # Generate the pixel coordinates with the given stride
-        y_indices, x_indices = np.indices((camera_height, camera_width))
-        pixels = np.stack([y_indices[::stride, ::stride], x_indices[::stride, ::stride]], axis=-1)
-        # Assign depth_map to the input depth_image
-        depth_map = depth_image
-        # Get the world-to-camera transformation matrix for the given camera
-        world_to_camera_transform = self.get_camera_transform_matrix(camera_name=camera_name, camera_height=camera_height, camera_width=camera_width)
-        # Compute the camera-to-world transformation matrix by inverting the world-to-camera matrix
-        camera_to_world_transform = np.linalg.inv(world_to_camera_transform)
-        # Transform pixel coordinates to world coordinates using the depth_map and camera-to-world transformation matrix
-        point_cloud = transform_from_pixels_to_world(pixels, depth_map, camera_to_world_transform, stride, camera_height, camera_width)
-        # Return the generated point cloud
-        return point_cloud
-
-    def get_point_cloud_in_camera_frame(self, camera_name, depth_image, stride):
-        """
-        Generate a point cloud from a depth image using the specified camera and stride.
-        Always use raw_depth=True when calling get_depth_image.
-        Args:
-            camera_name (str): Name of the camera used to capture the depth image
-            depth_image (np.array): Depth image to be converted into a point cloud.
-            stride (int): Stride for resizing the output point cloud
-
-        Returns:
-            point_cloud (np.array): 3D point cloud in the camera frame generated from the depth image
-        """
-        # Set camera_name and get dimensions of the depth_image
-        camera_height, camera_width = depth_image.shape
-        # Generate the pixel coordinates with the given stride
-        y_indices, x_indices = np.indices((camera_height, camera_width))
-        pixels = np.stack([y_indices[::stride, ::stride], x_indices[::stride, ::stride]], axis=-1)
-        # Assign depth_map to the input depth_image
-        depth_map = depth_image
-        # Get the camera intrinsic matrix
-        camera_matrix = self.get_camera_intrinsic_matrix(camera_name, camera_height, camera_width)
-        # Transform pixel coordinates to camera frame coordinates using the depth_map
-        point_cloud = transform_from_pixels_to_camera_frame(pixels, depth_map, camera_matrix, stride, camera_height, camera_width)
-        # Return the generated point cloud
-        return point_cloud
 
     def get_body_to_body_contact_force_point(self, body1: str, body2: str):
         """Get sum of contact forces that body1 is exerting on body2 in the global frame
