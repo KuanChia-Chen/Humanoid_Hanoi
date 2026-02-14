@@ -135,9 +135,9 @@ class GenericEnv(ABC):
     def action_size(self):
         return self.sim.num_actuators
 
-    @property
-    def observation_size(self):
-        return len(self.get_robot_state())
+    # @property
+    # def observation_size(self):
+    #     return len(self.get_robot_state())
 
     @property
     def extra_input_names(self):

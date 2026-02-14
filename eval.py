@@ -29,7 +29,7 @@ if __name__ == "__main__":
 
     # Load environment
     previous_args_dict['env_args'].simulator_type = "box_tower_of_honai"
-    previous_args_dict['algo_args'].env_name = "MHCBoxTowerOfHonaiDeltaEnv"
+    previous_args_dict['algo_args'].env_name = "BoxTowerOfHanoiEnv"
 
     add_env_parser(previous_args_dict['all_args'].env_name, parser, is_eval=True)
     args = parser.parse_args()
@@ -42,10 +42,4 @@ if __name__ == "__main__":
     previous_args_dict['env_args'].simulator_type += "_mesh"      # Use mesh model
     env = env_factory(previous_args_dict['all_args'].env_name, previous_args_dict['env_args'])()
 
-    # Load model class and checkpoint
-    actor, critic = nn_factory(args=previous_args_dict['nn_args'], env=env)
-    load_checkpoint(model=actor, model_dict=actor_checkpoint)
-    actor.eval()
-    actor.training = False
-
-    interactive_eval(actor=actor, env=env, offscreen=args.offscreen)
+    interactive_eval(env=env, offscreen=args.offscreen)
