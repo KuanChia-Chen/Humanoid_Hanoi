@@ -4,6 +4,7 @@ import numpy as np
 import time
 import random
 import json
+import mujoco as mj
 
 from util.quaternion import *
 from env.genericenv import GenericEnv
@@ -85,12 +86,12 @@ class BoxTowerOfHanoiEnv(GenericEnv, BoxManipulationCmd):
 
         if self.time_step < 2:
             simulator_repeat_steps = int(self.sim.simulator_rate / self.policy_rate)
-            self.step_simulation(np.zeros(20), simulator_repeat_steps, integral_action=False)
+            self.step_simulation(np.zeros(self.robot.n_actuators), simulator_repeat_steps, integral_action=False)
 
         self.time_step += 1
 
     def get_action_mirror_indices(self):
-        return np.zeros(11)
+        return self.robot.motor_mirror_indices
 
     def get_observation_mirror_indices(self):
         return np.zeros(80)
@@ -228,6 +229,9 @@ class BoxTowerOfHanoiEnv(GenericEnv, BoxManipulationCmd):
         box2_quat = scipy2mj(R.from_euler(seq = 'xyz', angles = [0, 0, self.desk_rotation[0]], degrees = False).as_quat())
         box2_pose = np.concatenate([box2_position, box2_quat])
         self.sim.data.qpos[-7:] = box2_pose
+
+        # Update forward kinematics to reflect new box positions in visualization
+        mj.mj_forward(self.sim.model, self.sim.data)
 
         # sort box position by distance
         box_positions = np.array([box0_position, box1_position, box2_position])

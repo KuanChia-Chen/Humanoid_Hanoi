@@ -87,12 +87,10 @@ class Digit(BaseRobot):
         # Select simulator
         self.state_est = state_est
         if "mesh" in simulator_type:
-            fast = False
             simulator_type = simulator_type.replace("_mesh", "")
-        else:
-            fast = True
+
         if simulator_type == "box_tower_of_hanoi":
-            self._sim = MjDigitSimBoxTowerOfHanoi(fast=fast)
+            self._sim = MjDigitSimBoxTowerOfHanoi()
         else:
             raise RuntimeError(f"{FAIL}Simulator type {simulator_type} not correct!"
                                "Select from 'mujoco' or 'ar_async'.{ENDC}")

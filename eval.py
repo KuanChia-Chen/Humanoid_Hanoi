@@ -9,6 +9,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--offscreen', default=False, action='store_true')
+    parser.add_argument('--robot', default="digit", choices=["h1", "g1", "digit"])
     
     # Add environment-specific argument parser
     parser = add_env_parser("BoxTowerOfHanoiEnv", parser, is_eval=True)
@@ -17,7 +18,7 @@ if __name__ == "__main__":
     # Create default environment arguments for BoxTowerOfHanoiEnv
     # Start with required GenericEnv parameters
     env_args = SimpleNamespace(
-        robot_name="digit",
+        robot_name=args.robot,
         terrain=None,
         state_est=False,
     )

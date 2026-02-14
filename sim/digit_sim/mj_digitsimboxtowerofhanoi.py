@@ -10,10 +10,10 @@ class MjDigitSimBoxTowerOfHanoi(MjDigitSim):
     """
     Wrapper for Digit Mujoco. This class only defines several specifics for Digit.
     """
-    def __init__(self, model_name: str = "digit-v3-box-tower-of-hanoi.xml", fast=True):
+    def __init__(self, model_name: str = "digit-v3-box-tower-of-hanoi.xml"):
 
         # NOTE: Have to call super init AFTER index arrays are defined
-        super().__init__(model_name=model_name, fast=fast)
+        super().__init__(model_name=model_name)
         self.arm_motor_position_inds = [30, 31, 32, 33, 57, 58, 59, 60]
         self.arm_motor_velocity_inds = [26, 27, 28, 29, 50, 51, 52, 53]
         self.arm_control_inds = [6, 7, 8, 9, 16, 17, 18, 19]
